@@ -6,31 +6,34 @@ var DeferredLoad = function(){
 
 DeferredLoad.prototype = {
     stack : [],
+    load : null,
 
     init : function(){
         this.cacheElement();
         this.initStore();
-        this.lazyItems !== undefined && this.bindEvent();
+        this.deferredItems !== undefined && this.bindEvent();
     },
 
     initStore : function(){
         // >>> operator is length of array to increment 1
-        var len = this.lazyItems.length >>> 0;
+        var len = this.deferredItems.length >>> 0;
 
-        for(; len--; this.stack[len] = this.lazyItems[len]);
+        for(; len--; this.stack[len] = this.deferredItems[len]);
     },
 
     cacheElement : function(){
-        this.lazyItems = document.querySelectorAll('img[data-lazy]');
+        this.deferredItems = document.querySelectorAll('[data-deferred-complete=N]');
     },
 
     bindEvent : function(){
-        document.addEventListener('DOMContentLoaded', this.loadItems.bind(this), false);
-        window.addEventListener('scroll', this.loadItems.bind(this), false);
+        this.load = this.loadItems.bind(this);
+
+        document.addEventListener('DOMContentLoaded', this.load, false);
+        window.addEventListener('scroll', this.load, false);
     },
 
     unbindEvent : function(){
-        this.stack.length === 0 && window.removeEventListener('scroll', this.loadItems, false);
+        this.stack.length === 0 && window.removeEventListener('scroll', this.load, false);
     },
 
     getBoundingClientProperty : function(item){
@@ -43,17 +46,29 @@ DeferredLoad.prototype = {
     },
 
     replaceOriginalItem : function(item, index){
-        item.src = item.getAttribute('data-lazy');
+        var deferred = item.getAttribute('data-deferred');
+
+        if(item.src && item.tagName === 'IMG'){
+            item.src = deferred;
+        } else {
+            item.style.backgroundImage = ['url(', deferred, ')'].join('');
+        }
 
         this.removeItems(item, index);
     },
 
     removeItems : function(item, index){
-        this.stack.indexOf(item) !== -1 && this.stack.splice(index, 1) && this.unbindEvent();
+        if(this.stack.indexOf(item) !== -1){
+            item.dataset['deferredComplete'] = 'Y';
+            this.stack.splice(index, 1);
+            this.unbindEvent();
+        }
     },
 
     loadItems : function(){
         var len = this.stack.length;
+
+        this.stack.length <= 0 && this.unbindEvent();
 
         while(len-- > 0){
             var item = this.stack[len];
