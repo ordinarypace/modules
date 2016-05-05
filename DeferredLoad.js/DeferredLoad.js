@@ -4,6 +4,7 @@ var DeferredLoad = function(){
     this.init();
 };
 
+DeferredLoad.version = 0.2;
 DeferredLoad.prototype = {
     stack : [],
     load : null,
@@ -68,7 +69,7 @@ DeferredLoad.prototype = {
     loadItems : function(){
         var len = this.stack.length;
 
-        this.stack.length <= 0 && this.unbindEvent();
+        this.unbindEvent();
 
         while(len-- > 0){
             var item = this.stack[len];
