@@ -1,87 +1,91 @@
 'use strict';
 
 var DeferredLoad = function(){
-    this.init();
+	this.init();
 };
 
-DeferredLoad.version = 0.2;
 DeferredLoad.prototype = {
-    stack : [],
-    load : null,
+	stack : [],
+	load : null,
+	loaded : false,
+	trackingViewOffsetTop : 0,
 
-    init : function(){
-        this.cacheElement();
-        this.initStore();
-        this.deferredItems !== undefined && this.bindEvent();
-    },
+	init : function(){
+		this.cacheElement();
+		this.initStore();
+		this.deferredItems !== undefined && this.bindEvent();
+	},
 
-    initStore : function(){
-        // >>> operator is length of array to increment 1
-        var len = this.deferredItems.length >>> 0;
+	initStore : function(){
+		var len = this.deferredItems.length >>> 0;
 
-        for(; len--; this.stack[len] = this.deferredItems[len]);
-    },
+		for(; len--; this.stack[len] = this.deferredItems[len]);
 
-    cacheElement : function(){
-        this.deferredItems = document.querySelectorAll('[data-deferred-complete=N]');
-    },
+		this.trackingViewOffsetTop = this.stack[0].getBoundingClientRect().top;
+	},
 
-    bindEvent : function(){
-        this.load = this.loadItems.bind(this);
+	cacheElement : function(){
+		this.deferredItems = document.querySelectorAll('[data-deferred-complete=N]');
+	},
 
-        document.addEventListener('DOMContentLoaded', this.load, false);
-        window.addEventListener('scroll', this.load, false);
-    },
+	bindEvent : function(){
+		this.load = this.loadItems.bind(this);
 
-    unbindEvent : function(){
-        this.stack.length === 0 && window.removeEventListener('scroll', this.load, false);
-    },
+		document.addEventListener('DOMContentLoaded', this.load, false);
+		window.addEventListener('scroll', this.load, false);
+	},
 
-    getBoundingClientProperty : function(item){
-        if(item === undefined){
-            return;
-        }
+	unbindEvent : function(){
+		this.stack.length === 0 && window.removeEventListener('scroll', this.load, false);
+	},
 
-        var rect = item.getBoundingClientRect();
-        return (rect.top >= 0 && rect.top) <= window.innerHeight || document.documentElement.clientHeight;
-    },
+	getBoundingClientProperty : function(item){
+		if(item === undefined){
+			return;
+		}
 
-    replaceOriginalItem : function(item, index){
-        var deferred = item.getAttribute('data-deferred');
+		var rect = item.getBoundingClientRect();
 
-        if(item.src && item.tagName === 'IMG'){
-            item.src = deferred;
-        } else {
-            item.style.backgroundImage = ['url(', deferred, ')'].join('');
-        }
+		return (rect && rect.top >= 0) <= window.innerHeight || document.documentElement.clientHeight;
+	},
 
-        this.removeItems(item, index);
-    },
+	replaceOriginalItem : function(item, index){
+		var deferred = item.getAttribute('data-deferred');
 
-    removeItems : function(item, index){
-        if(this.stack.indexOf(item) !== -1){
-            item.dataset['deferredComplete'] = 'Y';
-            this.stack.splice(index, 1);
-            this.unbindEvent();
-        }
-    },
+		if(item.src !== undefined && item.tagName === 'IMG'){
+			item.src = deferred;
+		} else {
+			item.style.backgroundImage = ['url(', deferred, ')'].join('');
+		}
 
-    loadItems : function(){
-        var len = this.stack.length;
+		this.removeItems(item, index);
+	},
 
-        this.unbindEvent();
+	removeItems : function(item, index){
+		if(this.stack.indexOf(item) !== -1){
+			item.dataset['deferredComplete'] = 'Y';
+			this.stack.splice(index, 1);
+			this.unbindEvent();
+		}
+	},
 
-        while(len-- > 0){
-            var item = this.stack[len];
+	loadItems : function(){
+		var len = this.stack.length;
 
-            if(this.getBoundingClientProperty(item) === true){
-                this.logging(item);
-                this.replaceOriginalItem(item, len);
-            }
-        }
-    },
+		this.unbindEvent();
 
-    logging : function(item){
-        //google analytics log statement...
-    }
+		while(len-- > 0){
+			var item = this.stack[len];
+
+			if(this.getBoundingClientProperty(item) === true){
+				this.replaceOriginalItem(item, len);
+				!this.loaded && this.logging();
+			}
+		}
+	},
+
+	logging : function(){
+		this.loaded = true;
+		window.fashionImpressionTracking && fashionImpressionTracking('scroll_relative_products', null, this.trackingViewOffsetTop);
+	}
 };
