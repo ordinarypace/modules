@@ -86,6 +86,6 @@ DeferredLoad.prototype = {
 
 	logging : function(){
 		this.loaded = true;
-		window.fashionImpressionTracking && fashionImpressionTracking('scroll_relative_products', null, this.trackingViewOffsetTop);
+		// tracking code ...
 	}
 };
