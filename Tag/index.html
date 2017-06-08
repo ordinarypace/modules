@@ -5,6 +5,7 @@
     <title>Regist Tag</title>
 </head>
 <body>
+    <p>콤마로 구분되며 아이템을 클릭하면 삭제됩니다.</p>
     <input type="text" id="multiUseInput">
     <ul id="tagGroup">
     </ul>
@@ -18,7 +19,7 @@
         var MAXLENGTH = 10;
 
         var store = [];
-        var keyword = [];
+        var tags = [];
         var doc = document;
         var fragment = doc.createDocumentFragment();
         var target;
@@ -44,7 +45,7 @@
             if(pattern.test(value)){
                 value = value.split(',')[0];
 
-                if(compareStore(value) > -1){
+                if(compareTag(value) > -1){
                     console.log('This tag is already registered');
                     initInput(this);
 
@@ -79,7 +80,7 @@
         var addTagItem = function(tag, value, context){
             tagGroup.appendChild(tag);
             store.push(tag);
-            keyword.push(value.trim());
+            tags.push(value.trim());
 
             tag.addEventListener('click', removeTagItem, false);
 
@@ -93,7 +94,7 @@
             if(index > -1){
                 store[index].removeEventListener('click', removeTagItem, false);
                 store.splice(index, 1);
-                keyword.splice(index, 1);
+                tags.splice(index, 1);
             }
 
             tagGroup.innerHTML = '';
@@ -117,7 +118,7 @@
             $.ajax({
                 method : 'GET or POST',
                 url : '',
-                data : { tags : keyword.join(',') }
+                data : { tags : tags.join(',') }
                 success : function(){
 
                 },
@@ -131,8 +132,8 @@
             **/
         };
 
-        var compareStore = function(value){
-            return keyword.indexOf(value);
+        var compareTag = function(value){
+            return tags.indexOf(value);
         };
 
         return {
