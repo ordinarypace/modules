@@ -15,7 +15,7 @@
 *       remove to click item
 **/
     var multiUseInput = (function(){
-        var stack = [];
+        var store = [];
         var doc = document;
         var fragment = doc.createDocumentFragment();
         var target = doc.getElementById('multiUseInput');
@@ -30,7 +30,7 @@
                 tag = setFragment(value);
 
                 tagGroup.appendChild(tag);
-                stack.push(tag);
+                store.push(tag);
 
                 tag.addEventListener('click', removeTagItem, false);
 
@@ -61,11 +61,11 @@
 
         var removeTagItem = function(e){
             var target = e.target.tagName.toLowerCase() === 'a' ? e.target.parentNode : e.target;
-            var index = stack.indexOf(target);
+            var index = store.indexOf(target);
 
             if(index > -1){
-                stack[index].removeEventListener('click', removeTagItem, false);
-                stack.splice(index, 1);
+                store[index].removeEventListener('click', removeTagItem, false);
+                store.splice(index, 1);
             }
 
             tagGroup.innerHTML = '';
@@ -77,7 +77,7 @@
             var iterate = 0;
 
             while(len > iterate){
-                fragment.appendChild(stack[iterate]);
+                fragment.appendChild(store[iterate]);
                 iterate++;
             }
 
