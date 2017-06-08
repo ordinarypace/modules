@@ -63,7 +63,8 @@
             var target = e.target.tagName.toLowerCase() === 'a' ? e.target.parentNode : e.target;
             var index = stack.indexOf(target);
 
-            if(index !== -1){
+            if(index > -1){
+                stack[index].removeEventListener('click', removeTagItem, false);
                 stack.splice(index, 1);
             }
 
