@@ -46,22 +46,16 @@
         };
 
         var setFragment = function(value){
-            var el = {};
+            var el = createTagList();
 
-            el = createTagList();
             el.anchor.textContent = value.split(',')[0];
-            el.li.appendChild(el.anchor);
-
-            return el.li;
+            return el.li.appendChild(el.anchor);
         };
 
         var createTagList = function(){
-            var li = doc.createElement('li');
-            var anchor = doc.createElement('a');
-
             return {
-                li : li,
-                anchor : anchor
+                li : doc.createElement('li'),
+                anchor : doc.createElement('a')
             }
         };
 
