@@ -20,11 +20,16 @@
         var fragment = doc.createDocumentFragment();
         var target = doc.getElementById('multiUseInput');
         var tagGroup = doc.getElementById('tagGroup');
+        var whiteList = /<(?!a|br)[^>]*>/gi;
+        var pattern = /[,]/g;
 
         var getWords = function(){
             var value = this.value;
             var tag;
-            var pattern = /[,]/g;
+
+            if(whiteList.test(value)){
+                throw new Error("don't use that literal!!");
+            }
 
             if(pattern.test(value)){
                 tag = setFragment(value);
