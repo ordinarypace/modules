@@ -29,6 +29,7 @@
 
             if(whiteList.test(value)){
                 throw new Error("don't use that literal!!");
+                return false;
             }
 
             if(pattern.test(value)){
