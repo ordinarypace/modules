@@ -14,11 +14,11 @@
 * use : If you get comma during text input
 *       remove to click item
 **/
-    var multiUseInput = (function(){
+    var regstTag = (function(){
         var store = [];
         var doc = document;
         var fragment = doc.createDocumentFragment();
-        var target = doc.getElementById('multiUseInput');
+        var target;
         var tagGroup = doc.getElementById('tagGroup');
         var whiteList = /<(?!a|br)[^>]*>/gi;
         var pattern = /[,]/g;
@@ -49,7 +49,9 @@
             var el = createTagList();
 
             el.anchor.textContent = value.split(',')[0];
-            return el.li.appendChild(el.anchor);
+            el.li.appendChild(el.anchor);
+
+            return el.li;
         };
 
         var createTagList = function(){
@@ -85,13 +87,14 @@
         }
 
         return {
-            init : function(){
+            init : function(id){
+                target = doc.getElementById(id);
                 target.addEventListener('keyup', getWords, false);
             }
         }
     })();
 
-    multiUseInput.init();
+    regstTag.init('multiUseInput');
 </script>
 </body>
 </html>
