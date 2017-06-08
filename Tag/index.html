@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Observer pattern</title>
+</head>
+<body>
+    <input type="text" id="multiUseInput">
+    <ul id="tagGroup">
+    </ul>
+<script>
+/**
+* author : jang jeong sik
+* use : If you get comma during text input
+*       remove to click item
+**/
+    var multiUseInput = (function(){
+        var stack = [];
+        var doc = document;
+        var fragment = doc.createDocumentFragment();
+        var target = doc.getElementById('multiUseInput');
+        var tagGroup = doc.getElementById('tagGroup');
+
+        var getWords = function(){
+            var value = this.value;
+            var tag;
+            var pattern = /[,]/g;
+
+            if(pattern.test(value)){
+                tag = setFragment(value);
+
+                tagGroup.appendChild(tag);
+                stack.push(tag);
+
+                tag.addEventListener('click', removeTagItem, false);
+
+                this.value = '';
+                this.focus();
+            }
+        };
+
+        var setFragment = function(value){
+            var el = {};
+
+            el = createTagList();
+            el.anchor.textContent = value.split(',')[0];
+            el.li.appendChild(el.anchor);
+
+            return el.li;
+        };
+
+        var createTagList = function(){
+            var li = doc.createElement('li');
+            var anchor = doc.createElement('a');
+
+            return {
+                li : li,
+                anchor : anchor
+            }
+        };
+
+        var removeTagItem = function(e){
+            var target = e.target.tagName.toLowerCase() === 'a' ? e.target.parentNode : e.target;
+            var index = stack.indexOf(target);
+
+            if(index !== -1){
+                stack.splice(index, 1);
+            }
+
+            tagGroup.innerHTML = '';
+            updateTagGroup();
+        };
+
+        var updateTagGroup = function(){
+            var len = stack.length;
+            var iterate = 0;
+
+            while(len > iterate){
+                fragment.appendChild(stack[iterate]);
+                iterate++;
+            }
+
+            tagGroup.appendChild(fragment);
+        }
+
+        return {
+            init : function(){
+                target.addEventListener('keyup', getWords, false);
+            }
+        }
+    })();
+
+    multiUseInput.init();
+</script>
+</body>
+</html>
