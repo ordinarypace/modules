@@ -15,7 +15,10 @@
 *       remove to click item
 **/
     var regstTag = (function(){
+        var MAXLENGTH = 10;
+
         var store = [];
+        var keyword = [];
         var doc = document;
         var fragment = doc.createDocumentFragment();
         var target;
@@ -23,32 +26,44 @@
         var whiteList = /<(?!a|br)[^>]*>/gi;
         var pattern = /[,]/g;
 
+        if(store.length === MAXLENGTH){
+            alert("Can't register more than 10");
+        }
+
         var getWords = function(){
             var value = this.value;
             var tag;
 
             if(whiteList.test(value)){
-                throw new Error("don't use that literal!!");
+                throw new Error("Don't use that literal!!");
+                initInput(this);
+
                 return false;
             }
 
             if(pattern.test(value)){
-                tag = setFragment(value);
+                value = value.split(',')[0];
 
-                tagGroup.appendChild(tag);
-                store.push(tag);
+                if(compareStore(value) > -1){
+                    console.log('This tag is already registered');
+                    initInput(this);
 
-                tag.addEventListener('click', removeTagItem, false);
+                    return false;
+                }
 
-                this.value = '';
-                this.focus();
+                addTagItem(setFragment(value), value.trim(), this);
             }
+        };
+
+        var initInput = function(context){
+            context.value = '';
+            context.focus();
         };
 
         var setFragment = function(value){
             var el = createTagList();
 
-            el.anchor.textContent = value.split(',')[0];
+            el.anchor.textContent = '#' + value;
             el.li.appendChild(el.anchor);
 
             return el.li;
@@ -61,6 +76,16 @@
             }
         };
 
+        var addTagItem = function(tag, value, context){
+            tagGroup.appendChild(tag);
+            store.push(tag);
+            keyword.push(value.trim());
+
+            tag.addEventListener('click', removeTagItem, false);
+
+            initInput(context);
+        };
+
         var removeTagItem = function(e){
             var target = e.target.tagName.toLowerCase() === 'a' ? e.target.parentNode : e.target;
             var index = store.indexOf(target);
@@ -68,6 +93,7 @@
             if(index > -1){
                 store[index].removeEventListener('click', removeTagItem, false);
                 store.splice(index, 1);
+                keyword.splice(index, 1);
             }
 
             tagGroup.innerHTML = '';
@@ -103,7 +129,11 @@
                 }
             })
             **/
-        }
+        };
+
+        var compareStore = function(value){
+            return keyword.indexOf(value);
+        };
 
         return {
             init : function(id){
