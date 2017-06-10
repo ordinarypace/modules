@@ -9,98 +9,233 @@
     <input type="text" id="multiUseInput">
     <ul id="tagGroup">
     </ul>
+    <ul id="nodeList" style="max-height: 208px; overflow-y: auto;">
+        <li data-value="" data-level="1" data-default-selected="" class="active">
+            <a href="#">All categories</a>
+        </li>
+        <li data-value="1" data-level="1">
+            <a href="#">Wine</a>
+        </li>
+        <li data-value="2" data-level="2">
+            <a href="#">Color</a>
+        </li>
+        <li data-value="3" data-level="3">
+            <a href="#">Red</a>
+        </li>
+        <li data-value="4" data-level="3">
+            <a href="#">White</a>
+        </li>
+        <li data-value="5" data-level="3">
+            <a href="#">Rose</a>
+        </li>
+        <li data-value="6" data-level="2">
+            <a href="#">Country</a>
+        </li>
+        <li data-value="7" data-level="3">
+            <a href="#">Marokko</a>
+        </li>
+        <li data-value="8" data-level="3">
+            <a href="#">Russia</a>
+        </li>
+        <li data-value="9" data-level="2">
+            <a href="#">Sugar Content</a>
+        </li>
+        <li data-value="10" data-level="3">
+            <a href="#">Semi Sweet</a>
+        </li>
+        <li data-value="11" data-level="3">
+            <a href="#">Brut</a>
+        </li>
+        <li data-value="12" data-level="2">
+            <a href="#">Rating</a>
+        </li>
+        <li data-value="13" data-level="2">
+            <a href="#">Grape Sort</a>
+        </li>
+        <li data-value="14" data-level="3">
+            <a href="#">Riesling</a>
+        </li>
+        <li data-value="15" data-level="3">
+            <a href="#">Aleatico</a>
+        </li>
+        <li data-value="16" data-level="3">
+            <a href="#">Bouchet</a>
+        </li>
+        <li data-value="17" data-level="1">
+            <a href="#">Whiskey</a>
+        </li>
+        <li data-value="18" data-level="2">
+            <a href="#">Country</a>
+        </li>
+        <li data-value="19" data-level="3">
+            <a href="#">Ireland</a>
+        </li>
+        <li data-value="20" data-level="3">
+            <a href="#">Kanada</a>
+        </li>
+        <li data-value="21" data-level="3">
+            <a href="#">Scotland</a>
+        </li>
+    </ul>
 <script>
 /**
 * author : jang jeong sik
 * use : If you get comma during text input
 *       remove to click item
 **/
-    var regstTag = (function(){
-        var MAXLENGTH = 10;
+(function(){
+    var TS = {};
+    var store = [];
+    var tags = [];
+    var cache = [];
+    var stack = [];
+    var doc = document;
+    var fragment = doc.createDocumentFragment();
+    var target = null;
+    var MAXLENGTH = 10;
 
-        var store = [];
-        var tags = [];
-        var doc = document;
-        var fragment = doc.createDocumentFragment();
-        var target;
-        var tagGroup = doc.getElementById('tagGroup');
-        var whiteList = /<(?!a|br)[^>]*>/gi;
-        var pattern = /[,]/g;
+    TS.SearchNode = {
+        node : doc.getElementById('nodeList'),
+        copy : null,
+        init : function(){
+            this.copy = this.node.cloneNode(true);
 
-        if(store.length === MAXLENGTH){
-            alert("Can't register more than 10");
+            stack = Array.prototype.slice.call(this.copy.children);
+            target.addEventListener('keyup', this.searchNode.bind(this), false);
+        },
+
+        initSearchNode : function(value){
+            if(value.trim().length === 0){
+                this.setOriginNode();
+            }
+        },
+
+        searchNode : function(e){
+            var value = e.target.value;
+            var item;
+            var literal = value.substr(-1);
+            var i = stack.length;
+
+            this.initSearchNode(value);
+
+            while(i--){
+                word = stack[i].children[0].innerHTML;
+
+                if(new RegExp(value.toLowerCase()).test(word.toLowerCase())){
+                    cache.push(stack[i]);
+                }
+            }
+
+            this.setNode(literal);
+        },
+
+        setOriginNode : function(){
+            this.node.innerHTML = this.copy.innerHTML;
+        },
+
+        setNode : function(literal){
+            var item;
+
+            if(cache.length === 0){
+                return false;
+            }
+
+            this.node.innerHTML = '';
+
+            while(item = cache.shift()){
+                fragment.appendChild(item);
+            }
+
+            this.node.appendChild(fragment);
         }
+    };
 
-        var getWords = function(){
+    TS.Tag = {
+        tagGroup : doc.getElementById('tagGroup'),
+        whiteList : /<(?!a|br)[^>]*>/gi,
+        pattern : /[,]/g,
+
+        init : function(id){
+            if(store.length === MAXLENGTH){
+                alert("Can't register more than 10");
+            }
+
+            target = doc.getElementById(id);
+            target.addEventListener('keyup', this.getWords, false);
+        },
+
+        getWords : function(){
             var value = this.value;
 
-            if(whiteList.test(value)){
+            if(TS.Tag.whiteList.test(value)){
                 throw new Error("Don't use that literal!!");
                 initInput(this);
 
                 return false;
             }
 
-            if(pattern.test(value)){
+            if(TS.Tag.pattern.test(value)){
                 value = value.split(',')[0];
 
-                if(compareTag(value) > -1){
+                if(TS.Tag.compareTag(value) > -1){
                     console.log('This tag is already registered');
-                    initInput(this);
+                    TS.Tag.initInput(this);
 
                     return false;
                 }
 
-                addTagItem(setFragment(value), value.trim(), this);
+                TS.Tag.addTagItem(TS.Tag.setFragment(value), value.trim(), this);
             }
-        };
+        },
 
-        var initInput = function(context){
+        initInput : function(context){
             context.value = '';
             context.focus();
-        };
+        },
 
-        var setFragment = function(value){
-            var el = createTagList();
+        setFragment : function(value){
+            var el = this.createTagList();
 
             el.anchor.textContent = '#' + value;
             el.li.appendChild(el.anchor);
 
             return el.li;
-        };
+        },
 
-        var createTagList = function(){
+        createTagList : function(){
             return {
                 li : doc.createElement('li'),
                 anchor : doc.createElement('a')
             }
-        };
+        },
 
-        var addTagItem = function(tag, value, context){
-            tagGroup.appendChild(tag);
+        addTagItem : function(tag, value, context){
+            this.tagGroup.appendChild(tag);
+
             store.push(tag);
             tags.push(value.trim());
 
-            tag.addEventListener('click', removeTagItem, false);
+            tag.addEventListener('click', this.removeTagItem.bind(this), false);
 
-            initInput(context);
-        };
+            this.initInput(context);
+        },
 
-        var removeTagItem = function(e){
+        removeTagItem : function(e){
             var target = e.target.tagName.toLowerCase() === 'a' ? e.target.parentNode : e.target;
             var index = store.indexOf(target);
+            var fn = this.removeTagItem.bind(this);
 
             if(index > -1){
-                store[index].removeEventListener('click', removeTagItem, false);
+                store[index].removeEventListener('click', fn, false);
                 store.splice(index, 1);
                 tags.splice(index, 1);
             }
 
-            tagGroup.innerHTML = '';
-            updateTagGroup();
-        };
+            this.tagGroup.innerHTML = '';
+            this.updateTagGroup();
+        },
 
-        var updateTagGroup = function(){
+        updateTagGroup : function(){
             var len = store.length;
             var iterate = 0;
 
@@ -109,10 +244,10 @@
                 iterate++;
             }
 
-            tagGroup.appendChild(fragment);
-        };
+            this.tagGroup.appendChild(fragment);
+        },
 
-        var putData = function(){
+        putData : function(){
             /**
             $.ajax({
                 method : 'GET or POST',
@@ -129,22 +264,19 @@
                 }
             })
             **/
-        };
+        },
 
-        var compareTag = function(value){
+        compareTag : function(value){
             return tags.indexOf(value);
-        };
-
-        return {
-            init : function(id){
-                target = doc.getElementById(id);
-                target.addEventListener('keyup', getWords, false);
-            },
-            putData : putData
         }
-    })();
+    }
 
-    regstTag.init('multiUseInput');
+    window.TS = TS;
+
+    TS.Tag.init('multiUseInput');
+    TS.SearchNode.init();
+})();
+
 </script>
 </body>
 </html>
