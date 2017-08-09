@@ -83,199 +83,107 @@
 * use : If you get comma during text input
 *       remove to click item
 **/
-(function(){
-    var TS = {};
+var regstTag = (function(){
+    var MAXLENGTH = 10;
     var store = [];
     var tags = [];
-    var cache = [];
-    var stack = [];
     var doc = document;
     var fragment = doc.createDocumentFragment();
-    var target = null;
-    var MAXLENGTH = 10;
-
-    TS.SearchNode = {
-        node : doc.getElementById('nodeList'),
-        copy : null,
-        init : function(){
-            this.copy = this.node.cloneNode(true);
-
-            stack = Array.prototype.slice.call(this.copy.children);
-            target.addEventListener('keyup', this.searchNode.bind(this), false);
-        },
-
-        initSearchNode : function(value){
-            if(value.trim().length === 0){
-                this.setOriginNode();
-            }
-        },
-
-        searchNode : function(e){
-            var value = e.target.value;
-            var item;
-            var literal = value.substr(-1);
-            var i = stack.length;
-
-            this.initSearchNode(value);
-
-            while(i--){
-                word = stack[i].children[0].innerHTML;
-
-                if(new RegExp(value.toLowerCase()).test(word.toLowerCase())){
-                    cache.push(stack[i]);
-                }
-            }
-
-            this.setNode(literal);
-        },
-
-        setOriginNode : function(){
-            this.node.innerHTML = this.copy.innerHTML;
-        },
-
-        setNode : function(literal){
-            var item;
-
-            if(cache.length === 0){
+    var target;
+    var tagGroup = doc.getElementById('tagGroup');
+    var whiteList = /<(?!a|br)[^>]*>/gi;
+    var pattern = /[,]/g;
+    if(store.length === MAXLENGTH){
+        alert("Can't register more than 10");
+    }
+    var getWords = function(){
+        var value = this.value;
+        if(whiteList.test(value)){
+            throw new Error("Don't use that literal!!");
+            initInput(this);
+            return false;
+        }
+        if(pattern.test(value)){
+            value = value.split(',')[0];
+            if(compareTag(value) > -1){
+                console.log('This tag is already registered');
+                initInput(this);
                 return false;
             }
-
-            this.node.innerHTML = '';
-
-            while(item = cache.shift()){
-                fragment.appendChild(item);
-            }
-
-            this.node.appendChild(fragment);
+            addTagItem(setFragment(value), value.trim(), this);
         }
     };
-
-    TS.Tag = {
-        tagGroup : doc.getElementById('tagGroup'),
-        whiteList : /<(?!a|br)[^>]*>/gi,
-        pattern : /[,]/g,
-
-        init : function(id){
-            if(store.length === MAXLENGTH){
-                alert("Can't register more than 10");
-            }
-
-            target = doc.getElementById(id);
-            target.addEventListener('keyup', this.getWords, false);
-        },
-
-        getWords : function(){
-            var value = this.value;
-
-            if(TS.Tag.whiteList.test(value)){
-                throw new Error("Don't use that literal!!");
-                initInput(this);
-
-                return false;
-            }
-
-            if(TS.Tag.pattern.test(value)){
-                value = value.split(',')[0];
-
-                if(TS.Tag.compareTag(value) > -1){
-                    console.log('This tag is already registered');
-                    TS.Tag.initInput(this);
-
-                    return false;
-                }
-
-                TS.Tag.addTagItem(TS.Tag.setFragment(value), value.trim(), this);
-            }
-        },
-
-        initInput : function(context){
-            context.value = '';
-            context.focus();
-        },
-
-        setFragment : function(value){
-            var el = this.createTagList();
-
-            el.anchor.textContent = '#' + value;
-            el.li.appendChild(el.anchor);
-
-            return el.li;
-        },
-
-        createTagList : function(){
-            return {
-                li : doc.createElement('li'),
-                anchor : doc.createElement('a')
-            }
-        },
-
-        addTagItem : function(tag, value, context){
-            this.tagGroup.appendChild(tag);
-
-            store.push(tag);
-            tags.push(value.trim());
-
-            tag.addEventListener('click', this.removeTagItem.bind(this), false);
-
-            this.initInput(context);
-        },
-
-        removeTagItem : function(e){
-            var target = e.target.tagName.toLowerCase() === 'a' ? e.target.parentNode : e.target;
-            var index = store.indexOf(target);
-            var fn = this.removeTagItem.bind(this);
-
-            if(index > -1){
-                store[index].removeEventListener('click', fn, false);
-                store.splice(index, 1);
-                tags.splice(index, 1);
-            }
-
-            this.tagGroup.innerHTML = '';
-            this.updateTagGroup();
-        },
-
-        updateTagGroup : function(){
-            var len = store.length;
-            var iterate = 0;
-
-            while(len > iterate){
-                fragment.appendChild(store[iterate]);
-                iterate++;
-            }
-
-            this.tagGroup.appendChild(fragment);
-        },
-
-        putData : function(){
-            /**
-            $.ajax({
-                method : 'GET or POST',
-                url : '',
-                data : { tags : tags.join(',') }
-                success : function(){
-
-                },
-                complete : function(){
-
-                },
-                error : function(e){
-                    console.log(e);
-                }
-            })
-            **/
-        },
-
-        compareTag : function(value){
-            return tags.indexOf(value);
+    var initInput = function(context){
+        context.value = '';
+        context.focus();
+    };
+    var setFragment = function(value){
+        var el = createTagList();
+        el.anchor.textContent = '#' + value;
+        el.li.appendChild(el.anchor);
+        return el.li;
+    };
+    var createTagList = function(){
+        return {
+            li : doc.createElement('li'),
+            anchor : doc.createElement('a')
         }
+    };
+    var addTagItem = function(tag, value, context){
+        tagGroup.appendChild(tag);
+        store.push(tag);
+        tags.push(value.trim());
+        tag.addEventListener('click', removeTagItem, false);
+        initInput(context);
+    };
+    var removeTagItem = function(e){
+        var target = e.target.tagName.toLowerCase() === 'a' ? e.target.parentNode : e.target;
+        var index = store.indexOf(target);
+        if(index > -1){
+            store[index].removeEventListener('click', removeTagItem, false);
+            store.splice(index, 1);
+            tags.splice(index, 1);
+        }
+        tagGroup.innerHTML = '';
+        updateTagGroup();
+    };
+    var updateTagGroup = function(){
+        var len = store.length;
+        var iterate = 0;
+        while(len > iterate){
+            fragment.appendChild(store[iterate]);
+            iterate++;
+        }
+        tagGroup.appendChild(fragment);
+    };
+    var putData = function(){
+        /**
+        $.ajax({
+            method : 'GET or POST',
+            url : '',
+            data : { tags : tags.join(',') }
+            success : function(){
+            },
+            complete : function(){
+            },
+            error : function(e){
+                console.log(e);
+            }
+        })
+        **/
+    };
+    var compareTag = function(value){
+        return tags.indexOf(value);
+    };
+    return {
+        init : function(id){
+            target = doc.getElementById(id);
+            target.addEventListener('keyup', getWords, false);
+        },
+        putData : putData
     }
-
-    window.TS = TS;
-
-    TS.Tag.init('multiUseInput');
-    TS.SearchNode.init();
 })();
+regstTag.init('multiUseInput');
 
 </script>
 </body>
