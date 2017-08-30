@@ -1,0 +1,131 @@
+@import "mixin";
+
+.none-flick{
+  .button-next, .button-prev, .indicator-list{
+    display:none;
+  }
+}
+
+.panel-container{
+  position:relative;
+  width:100%;
+  height:445px;
+}
+.panel-wrapper{
+  overflow:hidden;
+  position:relative;
+  width:100%;
+  height:100%;
+}
+.panel-list{
+  &{
+    position:relative;
+    width:100%;
+    height:100%;
+  }
+  &:after{
+    display:block;
+    clear:both;
+    content:'';
+  }
+}
+.panel-item{
+  &{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+  }
+  a{
+    display:block;
+    width:100%;
+  }
+  img{
+    width:100%;
+  }
+}
+.indicator-item{
+  &{
+    display:inline-block;
+    margin:0 6px;
+  }
+  button{
+    display:inline-block;
+    overflow:hidden;
+    position:relative;
+    z-index:9999;
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#ccc;
+    line-height:900px;
+    vertical-align:top;
+  }
+  &.active{
+    button{
+      background:#c21f39;
+    }
+  }
+}
+
+%button-set{
+  display:none;
+  overflow:hidden;
+  position:absolute;
+  z-index:9999;
+  top:50%;
+  width:30px;
+  height:30px;
+  margin-top:-15px;
+  border:2px solid;
+  background-color:rgba(255, 255, 255, 0);
+  opacity:.5;
+  text-indent:-900px;
+}
+.button-prev{
+  left:20px;
+  @extend %button-set;
+  @include transform(rotate(-45deg));
+  border-color:#fff transparent transparent #fff;
+}
+.button-next{
+  right:20px;
+  @extend %button-set;
+  @include transform(rotate(45deg));
+  border-color:#fff #fff transparent transparent;
+}
+
+@media (min-width:768px){
+  .panel-container{
+    width:800px;
+    height:300px;
+    margin:0 auto;
+  }
+  .panel-list{
+    &{
+      height:150px;
+    }
+    &:after{
+      display:block;
+      clear:both;
+      content:'';
+    }
+  }
+  .panel-item{
+    a{
+      max-width:1024px;
+    }
+    img{
+      pointer-events:none;
+    }
+  }
+  .button-prev, .button-next{
+    display:block;
+  }
+}
+
+@media all and (max-width:768px) and (orientation:landscape){
+  .panel-container{
+    height:100%;
+  }
+}

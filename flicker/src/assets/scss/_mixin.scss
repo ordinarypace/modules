@@ -1,0 +1,16 @@
+@mixin transition($transition-property, $transition-duration, $transition-timing-function){
+
+  -webkit-transition:$transition-property $transition-duration $transition-timing-function;
+  -moz-transition:$transition-property $transition-duration $transition-timing-function;
+  -ms-transition:$transition-property $transition-duration $transition-timing-function;
+  -o-transition:$transition-property $transition-duration $transition-timing-function;
+  transition:$transition-property $transition-duration $transition-timing-function;
+}
+
+@mixin transform($transform){
+  -webkit-transform:$transform;
+  -moz-transform:$transform;
+  -ms-transform:$transform;
+  -o-transform:$transform;
+  transform: $transform;
+}
