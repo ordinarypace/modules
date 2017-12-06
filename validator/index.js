@@ -15,7 +15,7 @@ const Validator = (() => {
     const className = 'invalid-message';
     const response = new Map();
 
-    return class {
+    return class validator {
         static optional(options){
             return Common.array.assign(options).some(v => (v.checked || v.selected));
         }
@@ -26,8 +26,20 @@ const Validator = (() => {
             if(!option.checked) console.log(message);
         }
 
+        static traverseNode(item){
+            let node = item;
+
+            while(node){
+                if(node.nodeType === 1 && node.classList.contains(className)) return node;
+
+                node = node.nextSibling;
+            }
+        }
+
         constructor(collection){
             this._collection = Common.array.assign(collection);
+            this._target = null;
+            this._cb = null;
             this._error = 0;
         }
 
@@ -38,7 +50,8 @@ const Validator = (() => {
         set response(item){
             response.set(item.id, {
                 target: item,
-                value: item.value
+                value: item.value,
+                preset: preset[item.dataset.valid]
             });
         }
 
@@ -52,7 +65,16 @@ const Validator = (() => {
             if(Object.hasOwnProperty.call(preset, k)) delete preset[k];
         }
 
-        run(){
+        init(...args){
+            [this._target, this._cb] = args;
+        }
+
+        run(...args){
+            if(!this._target) this.init(...args);
+
+            this._error = 0;
+            this._target.disabled = true;
+
             for(const [k, v] of this._collection.entries()){
                 if(this.ignore(v)){
                     continue;
@@ -61,7 +83,9 @@ const Validator = (() => {
                 this.primitive(v);
             }
 
-            return !this._error;
+            this._target.disabled = false;
+
+            if(!this._error) this._cb.call(this, this.response);
         }
 
         primitive(item){
@@ -73,7 +97,7 @@ const Validator = (() => {
                         item,
                         type: validateType.valid,
                         command: validateCommand.remove,
-                        isError: -1
+                        isError: 0
                     });
                 }
             }
@@ -89,7 +113,7 @@ const Validator = (() => {
                   command = validateCommand.add,
                   isError = 1
         }){
-            const node = this.traverseNode(item);
+            const node = validator.traverseNode(item);
 
             this.error(isError);
             this.style([item, node], command);
@@ -101,15 +125,6 @@ const Validator = (() => {
             }
         }
 
-        traverseNode(item){
-            let node = item;
-
-            while(node){
-                if(node.nodeType === 1 && node.classList.contains(className)) return node;
-
-                node = node.nextSibling;
-            }
-        }
 
         style(items, command){
             items.forEach(v => v.classList[command](validateType.invalid));
@@ -121,7 +136,7 @@ const Validator = (() => {
 
         error(count){
             this._error += count;
-        }   
+        }
     };
 })();
 
