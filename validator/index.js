@@ -1,31 +1,33 @@
 import Common from '@/common';
 import preset from './preset';
 
+/**
+ * @author jeongsik.jang
+ * @date 2017. 12. 7
+ * @desc
+ *
+ * data-valid="preset | optional | ignore"
+ * data-essential (data-type : optional)
+ *
+ * const validator = new Validator(document.querySelectorAll('[data-valid]'));
+ * validator.run((response) => { ...statements });
+ */
 const Validator = (() => {
-    const validateType = {
+    const role = {
         valid: 'valid',
         invalid: 'invalid',
-        required: 'required'
+        required: 'required',
+        optional: 'optional'
     };
-    const validateCommand = {
+    const command = {
         add: 'add',
         remove: 'remove'
     };
-    const validateException = ['check', 'ignore'];
+
+    const exception = ['ignore'];
     const className = 'invalid-message';
-    const response = new Map();
 
     return class validator {
-        static optional(options){
-            return Common.array.assign(options).some(v => (v.checked || v.selected));
-        }
-
-        static conditional(option){
-            const { message } = option.dataset;
-
-            if(!option.checked) console.log(message);
-        }
-
         static traverseNode(item){
             let node = item;
 
@@ -36,106 +38,157 @@ const Validator = (() => {
             }
         }
 
-        constructor(collection){
-            this._collection = Common.array.assign(collection);
-            this._target = null;
-            this._cb = null;
+        constructor({ collection, target }){
             this._error = 0;
+            this._collection = Common.array.assign(collection);
+            this._required = this._collection.filter(v => v.dataset.valid !== role.optional);
+            this._optional = this._collection.filter(v => v.dataset.valid === role.optional);
+            this._response = new Map();
+            this._cb = null;
+            this._target = target;
+            this._loaded = false;
         }
 
         get response(){
-            return response;
+            return this._response;
         }
 
         set response(item){
-            response.set(item.id, {
+            this._response.set(item.id, {
                 target: item,
                 value: item.value,
+                option: item.checked || item.selected,
                 preset: preset[item.dataset.valid]
             });
         }
 
-        [validateCommand.add](k, v){
-            preset[k] = v;
-
-            return this;
-        }
-
-        [validateCommand.remove](k){
-            if(Object.hasOwnProperty.call(preset, k)) delete preset[k];
-        }
-
-        init(...args){
-            [this._target, this._cb] = args;
-        }
-
-        run(...args){
-            if(!this._target) this.init(...args);
-
+        run(cb){
+            this._cb = cb;
             this._error = 0;
-            this._target.disabled = true;
+            this.all();
+        }
 
-            for(const [k, v] of this._collection.entries()){
-                if(this.ignore(v)){
-                    continue;
+        all(){
+            this.process(this._collection, role.valid);
+        }
+
+        required(){
+            this.process(this._required, role.required);
+        }
+
+        optional(){
+            for(const [k, v] of this._optional.entries()){
+                v.checked = !v.checked;
+
+                this.validation(v);
+            }
+        }
+
+        watch(v){
+            ['keyup', 'change', 'focusin'].forEach(e => v.addEventListener(e, () => this.validation(v), false));
+        }
+
+        process(iterator, type){
+            for(const [k, v] of iterator.entries()){
+                if(this.ignore(v)) continue;
+                else {
+                    if(!this._loaded) this.watch(v);
                 }
 
-                this.primitive(v);
+                this.proceeding(true);
+                this.validation(v);
             }
 
-            this._target.disabled = false;
+            this.proceeding(false);
+            this._loaded = true;
 
-            if(!this._error) this._cb.call(this, this.response);
+            if(type === role.valid && !this._error) this._cb.call(this, this.response);
+        }
+
+        proceeding(boolean){
+            this._target.disabled = boolean;
+        }
+
+        validation(v){
+            if(v.dataset.valid === role.optional) this.aggregate(v);
+            else this.primitive(v);
         }
 
         primitive(item){
-            if(!this.required(item)) this.valid({ item, type: validateType.required });
+            if(!this.isValue(item)) this.valid({ item, type: role.required });
             else {
-                if(!preset[item.dataset.valid].rule.test(item.value.trim())) this.valid({ item, type: validateType.invalid });
+                if(!preset[item.dataset.valid].rule.test(item.value.trim())) this.valid({ item, type: role.invalid });
                 else {
                     this.valid({
                         item,
-                        type: validateType.valid,
-                        command: validateCommand.remove,
+                        type: role.valid,
+                        action: command.remove,
                         isError: 0
                     });
                 }
             }
         }
 
-        required(item){
-            return Common.string.isEmpty(item.value);
+        aggregate(item){
+            if(item.dataset.essential === 'true'){
+                if(item.checked || item.selected){
+                    this.valid({
+                        item,
+                        type: role.valid,
+                        action: command.remove,
+                        isError: 0
+                    });
+                } else this.valid({ item, type: role.invalid });
+            } else this.response = item;
         }
 
         valid({
                   item,
-                  type = validateType.required,
-                  command = validateCommand.add,
+                  type = role.required,
+                  action = command.add,
                   isError = 1
         }){
             const node = validator.traverseNode(item);
 
             this.error(isError);
-            this.style([item, node], command);
 
-            if(isError > 0) node.textContent = preset[item.dataset.valid][type];
-            else{
-                node.textContent = '';
-                this.response = item;
+            if(this._loaded){
+                this.style([item, node], action);
+
+                if(isError > 0) node.textContent = preset[item.dataset.valid][type];
+                else{
+                    node.textContent = '';
+                    this.response = item;
+                }
             }
         }
 
+        isValue(item){
+            return Common.string.isEmpty(item.value);
+        }
 
         style(items, command){
-            items.forEach(v => v.classList[command](validateType.invalid));
+            items.forEach(v => v.classList[command](role.invalid));
         }
 
         ignore(item){
-            return validateException.includes(item.dataset.valid);
+            this.response = item;
+
+            return exception.includes(item.dataset.valid);
         }
 
         error(count){
             this._error += count;
+        }
+
+        [command.add](k, v){
+            preset[k] = v;
+
+            return this;
+        }
+
+        [command.remove](k){
+            if(Object.hasOwnProperty.call(preset, k)) delete preset[k];
         }
     };
 })();

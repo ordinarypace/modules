@@ -33,6 +33,16 @@ const ValidatePreset = {
         rule: /((?=.*\d)(?=.*[a-zA-Z])(?=.*$).{6,15})/,
         required: '비밀번호를 입력해 주세요.',
         invalid: '비밀번호를 정확히 입력해 주세요.'
+    },
+
+    password2: {
+        rule: /((?=.*\d)(?=.*[a-zA-Z])(?=.*$).{6,15})/,
+        required: '비밀번호를 한번 더 입력해 주세요.',
+        invalid: '비밀번호를 정확히 입력해 주세요.'
+    },
+
+    optional: {
+        invalid: '필수항목을 체크해 주세요.'
     }
 };
 
