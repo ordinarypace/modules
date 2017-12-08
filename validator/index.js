@@ -69,11 +69,11 @@ const Validator = (() => {
         }
 
         all(){
-            this.process(this._collection, role.valid);
+            this.process(this._collection);
         }
 
         required(){
-            this.process(this._required, role.required);
+            this.process(this._required);
         }
 
         optional(){
@@ -88,21 +88,24 @@ const Validator = (() => {
             ['keyup', 'change', 'focusin'].forEach(e => v.addEventListener(e, () => this.validation(v), false));
         }
 
-        process(iterator, type){
+        process(iterator){
+            this.proceeding(true);
+
             for(const [k, v] of iterator.entries()){
                 if(this.ignore(v)) continue;
                 else {
                     if(!this._loaded) this.watch(v);
                 }
 
-                this.proceeding(true);
                 this.validation(v);
             }
 
-            this.proceeding(false);
             this._loaded = true;
 
-            if(type === role.valid && !this._error) this._cb.call(this, this.response);
+            if(!this._error){
+                this.proceeding(false);
+                this._cb.call(this, this.response)
+            }
         }
 
         proceeding(boolean){
