@@ -1,17 +1,6 @@
 import Common from '@/common';
 import preset from './preset';
 
-/**
- * @author jeongsik.jang
- * @date 2017. 12. 7
- * @desc
- *
- * data-valid="preset | optional | ignore"
- * data-essential (data-type : optional)
- *
- * const validator = new Validator(document.querySelectorAll('[data-valid]'));
- * validator.run((response) => { ...statements });
- */
 const Validator = (() => {
     const role = {
         valid: 'valid',
@@ -38,7 +27,22 @@ const Validator = (() => {
             }
         }
 
-        constructor({ collection, target }){
+        static migration(response){
+            const data = {
+                'login_email': response.get('login_email').value,
+                'web_name': response.get('web_name').value,
+                'password': response.get('password').value,
+                'gender': '',
+                'birthday': '',
+                'fb_id': '',
+                'fb_profile_url': '',
+                'fb_friends': ''
+            };
+
+            return data;
+        }
+
+        constructor({ collection, target, compare }){
             this._error = 0;
             this._collection = Common.array.assign(collection);
             this._required = this._collection.filter(v => v.dataset.valid !== role.optional);
@@ -46,6 +50,7 @@ const Validator = (() => {
             this._response = new Map();
             this._cb = null;
             this._target = target;
+            this._compare = compare;
             this._loaded = false;
         }
 
@@ -84,32 +89,21 @@ const Validator = (() => {
             }
         }
 
-        watch(v){
-            ['keyup', 'change', 'focusin'].forEach(e => v.addEventListener(e, () => this.validation(v), false));
-        }
-
         process(iterator){
-            this.proceeding(true);
-
             for(const [k, v] of iterator.entries()){
                 if(this.ignore(v)) continue;
-                else {
-                    if(!this._loaded) this.watch(v);
-                }
+                else if(!this._loaded) this.watch(v);
 
                 this.validation(v);
             }
 
             this._loaded = true;
 
-            if(!this._error){
-                this.proceeding(false);
-                this._cb.call(this, this.response)
-            }
+            if(!this._error) this._cb.call(this, this.response);
         }
 
-        proceeding(boolean){
-            this._target.disabled = boolean;
+        watch(v){
+            ['keyup', 'change', 'focusin'].forEach(e => v.addEventListener(e, () => this.validation(v), false));
         }
 
         validation(v){
@@ -119,59 +113,66 @@ const Validator = (() => {
 
         primitive(item){
             if(!this.isValue(item)) this.valid({ item, type: role.required });
-            else {
-                if(!preset[item.dataset.valid].rule.test(item.value.trim())) this.valid({ item, type: role.invalid });
-                else {
-                    this.valid({
-                        item,
-                        type: role.valid,
-                        action: command.remove,
-                        isError: 0
-                    });
-                }
-            }
+            else !preset[item.dataset.valid].rule.test(item.value.trim()) ? this.valid({ item }) : this.valid({ item, isError: 0 });
         }
 
         aggregate(item){
-            if(item.dataset.essential === 'true'){
-                if(item.checked || item.selected){
-                    this.valid({
-                        item,
-                        type: role.valid,
-                        action: command.remove,
-                        isError: 0
-                    });
-                } else this.valid({ item, type: role.invalid });
-            } else this.response = item;
+            if(item.dataset.essential === 'true') item.checked || item.selected ? this.valid({ item, isError: 0 }) : this.valid({ item });
+            else this.response = item;
         }
 
-        valid({
-                  item,
-                  type = role.required,
-                  action = command.add,
-                  isError = 1
-        }){
+        valid({ item, type = role.invalid, isError = 1 }){
             const node = validator.traverseNode(item);
 
             this.error(isError);
 
             if(this._loaded){
-                this.style([item, node], action);
-
-                if(isError > 0) node.textContent = preset[item.dataset.valid][type];
-                else{
-                    node.textContent = '';
-                    this.response = item;
+                if(isError > 0) this.fail({ item, node, type });
+                else {
+                    if(this._compare.length && item.dataset.valid === this._compare[1]) this.compare(item) ? this.success({ item, node, type: role.valid }) : this.fail({ item, node });
+                    else this.success({ item, node, type: role.valid });
                 }
             }
+        }
+
+        fail({
+                 item,
+                 node,
+                 type = role.invalid,
+                 action = command.add
+        }){
+            node.textContent = preset[item.dataset.valid][type];
+            this.style([item, node], type, action);
+        }
+
+        success({
+                    item,
+                    node,
+                    type = role.valid,
+                    action = command.add
+        }){
+            if(node.classList.contains(role.invalid)) this.style([item, node], role.invalid, command.remove);
+
+            node.textContent = '';
+            this.style([item, node], type, action);
+            this.response = item;
         }
 
         isValue(item){
             return Common.string.isEmpty(item.value);
         }
 
-        style(items, command){
-            items.forEach(v => v.classList[command](role.invalid));
+        compare(v){
+            return this.response.get(this._compare[0]).value === v.value;
+        }
+
+        proceeding(boolean){
+            this._target.disabled = boolean;
+        }
+
+        style(items, type, action){
+            console.log(`${action}: ${type}`);
+            items.forEach(v => v.classList[action]((type === role.required) ? role.invalid : type));
         }
 
         ignore(item){
