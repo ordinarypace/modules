@@ -171,7 +171,6 @@ const Validator = (() => {
         }
 
         style(items, type, action){
-            console.log(`${action}: ${type}`);
             items.forEach(v => v.classList[action]((type === role.required) ? role.invalid : type));
         }
 
