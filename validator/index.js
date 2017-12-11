@@ -26,38 +26,6 @@ const Validator = (() => {
             }
         }
 
-        static migration(response){
-            const getGender = () => {
-                const male = response.get('male').checked;
-                const female = response.get('female').checked;
-
-                if(male || female){
-                    return male ? '남자' : '여자';
-                }
-            };
-
-            const getBirthday = () => {
-                const year = response.get('year').value;
-                const month = response.get('month').value;
-                const day = response.get('day').value;
-
-                return year && month && day ? [year, month, day].join('-') : '';
-            };
-
-            const data = {
-                'login_email': response.get('login_email').value,
-                'web_name': response.get('web_name').value,
-                'password': response.get('password').value,
-                'gender': getGender(),
-                'birthday': getBirthday(),
-                'fb_id': '',
-                'fb_profile_url': '',
-                'fb_friends': ''
-            };
-
-            return data;
-        }
-
         constructor({ collection, target, compare }){
             this._error = 0;
             this._collection = [...collection];
