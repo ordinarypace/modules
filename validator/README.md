@@ -38,6 +38,13 @@ this.validator.run();
 this.validator.optional();
 ```
 
+##### result
+```bash
+this.validator.run((response) => {
+    // ...statements
+});
+```
+
 ##### use methods and return result
 ```bash
 // run validator
