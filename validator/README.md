@@ -6,6 +6,7 @@
     <i class="ico"></i>
     <span class="description"></span>
 </label>
+<span class="invalid-message"></span>
 ```
 
 ##### types data-valid
@@ -13,11 +14,19 @@
 data-valid : name / email / password / year / month / day ... 
 ```
 
+##### ignore types
+```bash
+data-valid="ignore"
+```
+
 ##### script / standard
 ```bash
-this.validator = new validator({
+const validator = new Validator({
+    // mandantory
     collection: document.querySelectorAll('[data-valid]'),
     target: document.querySelector('.poing-signup__complete'),
+    
+    // optional
     compare: ['password', 'password2']
 });
 
@@ -27,4 +36,28 @@ this.validator.run();
 ##### script / optional
 ```bash
 this.validator.optional();
+```
+
+##### use methods and return result
+```bash
+// run validator
+validator.run()
+
+// run optional validator
+validator.optional()
+
+// add preset rules
+validator.add(key, value)
+
+// remove preset rules
+validator.remove(key)
+
+// static methods / traverse invalid-message node
+Validator.traverseNode(item)
+
+// result type is Map
+result.get(key).target
+result.get(key).value
+result.get(key).option
+result.get(key).preset
 ```
