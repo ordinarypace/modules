@@ -1,14 +1,19 @@
 # use
 ##### mark-up
 ```bash
-<input type="checkbox" id="" class="" data-valid="optional">
+<input type="checkbox" id="" class="" data-valid="">
 <label for="" class="">
     <i class="ico"></i>
     <span class="description"></span>
 </label>
 ```
 
-##### script
+##### types data-valid
+```bash
+data-valid : name / email / password / year / month / day ... 
+```
+
+##### script / standard
 ```bash
 this.validator = new validator({
     collection: document.querySelectorAll('[data-valid]'),
@@ -17,4 +22,9 @@ this.validator = new validator({
 });
 
 this.validator.run();
+```
+
+##### script / optional
+```bash
+this.validator.optional();
 ```
