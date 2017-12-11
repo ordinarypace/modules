@@ -1,4 +1,3 @@
-import Common from '@/common';
 import preset from './preset';
 
 const Validator = (() => {
@@ -28,12 +27,29 @@ const Validator = (() => {
         }
 
         static migration(response){
+            const getGender = () => {
+                const male = response.get('male').checked;
+                const female = response.get('female').checked;
+
+                if(male || female){
+                    return male ? '남자' : '여자';
+                }
+            };
+
+            const getBirthday = () => {
+                const year = response.get('year').value;
+                const month = response.get('month').value;
+                const day = response.get('day').value;
+
+                return year && month && day ? [year, month, day].join('-') : '';
+            };
+
             const data = {
                 'login_email': response.get('login_email').value,
                 'web_name': response.get('web_name').value,
                 'password': response.get('password').value,
-                'gender': '',
-                'birthday': '',
+                'gender': getGender(),
+                'birthday': getBirthday(),
                 'fb_id': '',
                 'fb_profile_url': '',
                 'fb_friends': ''
@@ -44,7 +60,7 @@ const Validator = (() => {
 
         constructor({ collection, target, compare }){
             this._error = 0;
-            this._collection = Common.array.assign(collection);
+            this._collection = [...collection];
             this._required = this._collection.filter(v => v.dataset.valid !== role.optional);
             this._optional = this._collection.filter(v => v.dataset.valid === role.optional);
             this._response = new Map();
@@ -83,8 +99,6 @@ const Validator = (() => {
 
         optional(){
             for(const [k, v] of this._optional.entries()){
-                v.checked = !v.checked;
-
                 this.validation(v);
             }
         }
@@ -141,6 +155,8 @@ const Validator = (() => {
                  type = role.invalid,
                  action = command.add
         }){
+            if(node.classList.contains(role.valid)) this.style([item, node], role.valid, command.remove);
+
             node.textContent = preset[item.dataset.valid][type];
             this.style([item, node], type, action);
         }
@@ -159,7 +175,7 @@ const Validator = (() => {
         }
 
         isValue(item){
-            return Common.string.isEmpty(item.value);
+            return item.value.trim().length;
         }
 
         compare(v){
@@ -171,7 +187,7 @@ const Validator = (() => {
         }
 
         style(items, type, action){
-            items.forEach(v => v.classList[action]((type === role.required) ? role.invalid : type));
+            items.forEach(v => v.classList[action](type === role.required ? role.invalid : type));
         }
 
         ignore(item){
