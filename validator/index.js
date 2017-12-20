@@ -26,6 +26,10 @@ const Validator = (() => {
             }
         }
 
+        static migration(response, cb){
+            return cb(response);
+        }
+
         constructor({ collection, target, compare }){
             this._error = 0;
             this._collection = [...collection];
@@ -111,7 +115,7 @@ const Validator = (() => {
             if(this._loaded){
                 if(isError > 0) this.fail({ item, node, type });
                 else {
-                    if(this._compare.length && item.dataset.valid === this._compare[1]) this.compare(item) ? this.success({ item, node, type: role.valid }) : this.fail({ item, node });
+                    if(this._compare && this._compare.length && item.dataset.valid === this._compare[1]) this.compare(item) ? this.success({ item, node, type: role.valid }) : this.fail({ item, node });
                     else this.success({ item, node, type: role.valid });
                 }
             }
