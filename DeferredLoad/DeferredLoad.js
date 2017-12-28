@@ -1,91 +1,119 @@
-'use strict';
+const Preload = (() => {
+    let observer = null;
 
-var DeferredLoad = function(){
-	this.init();
-};
+    const store = [];
+    const isIntersection = ('IntersectionObserver' in window);
+    const y = window.scrollY;
 
-DeferredLoad.prototype = {
-	stack : [],
-	load : null,
-	loaded : false,
-	trackingViewOffsetTop : 0,
+    // TODO: background 이미지 지원 여부 및 쓰로틀링 지원
+    return class {
+        constructor(config){
+            this._config = config;
+            this._images = document.querySelectorAll('[data-preload]');
 
-	init : function(){
-		this.cacheElement();
-		this.initStore();
-		this.deferredItems !== undefined && this.bindEvent();
-	},
+            isIntersection ? this.observer() : this.establish();
+        }
 
-	initStore : function(){
-		var len = this.deferredItems.length >>> 0;
+        /**
+         * @desc 옵저버에 이미지 등록
+         */
+        observer(){
+            observer = new IntersectionObserver(this.intersection.bind(this), this._config);
+            this._images.forEach(image => observer.observe(image));
+        }
 
-		for(; len--; this.stack[len] = this.deferredItems[len]);
+        /**
+         * @desc 이미지가 intersecting 일 경우 preload 실행
+         * @param entries
+         */
+        intersection(entries){
+            entries.forEach(v => {
+                if(!v.isIntersecting) return;
 
-		this.trackingViewOffsetTop = this.stack[0].getBoundingClientRect().top;
-	},
+                const { target } = v;
 
-	cacheElement : function(){
-		this.deferredItems = document.querySelectorAll('[data-deferred-complete=N]');
-	},
+                this.preload(target);
+                observer.unobserve(target);
+            });
+        }
 
-	bindEvent : function(){
-		this.load = this.loadItems.bind(this);
+        /**
+         * @desc IntersectionObserver 를 지원하지 않을 경우 스토어 초기화
+         */
+        establish(){
+            let len = this._images.length;
 
-		document.addEventListener('DOMContentLoaded', this.load, false);
-		window.addEventListener('scroll', this.load, false);
-	},
+            while(len--) store.push(this._images[len]);
 
-	unbindEvent : function(){
-		this.stack.length === 0 && window.removeEventListener('scroll', this.load, false);
-	},
+            y === 0 ? this.processing() : this.registerEvent();
+        }
 
-	getBoundingClientProperty : function(item){
-		if(item === undefined){
-			return;
-		}
+        /**
+         * @desc 이미지 preload
+         * @param target
+         * @param index
+         */
+        preload(target, index){
+            const { preload } = target.dataset;
 
-		var rect = item.getBoundingClientRect();
+            target.src = preload;
 
-		return (rect && rect.top >= 0) <= window.innerHeight || document.documentElement.clientHeight;
-	},
+            if(!isIntersection){
+                this.destroyStore(target, index);
+            }
+        }
 
-	replaceOriginalItem : function(item, index){
-		var deferred = item.getAttribute('data-deferred');
+        /**
+         * @desc 스토어에 저장되어 있는 이미지 preload
+         */
+        processing(){
+            let image;
+            let len = store.length - 1;
 
-		if(item.src !== undefined && item.tagName === 'IMG'){
-			item.src = deferred;
-		} else {
-			item.style.backgroundImage = ['url(', deferred, ')'].join('');
-		}
+            this.destroyEvent();
 
-		this.removeItems(item, index);
-	},
+            while(image = store[len--]){
+                if(this.getHeight(image)) this.preload(image, len);
+            }
+        }
 
-	removeItems : function(item, index){
-		if(this.stack.indexOf(item) !== -1){
-			item.dataset['deferredComplete'] = 'Y';
-			this.stack.splice(index, 1);
-			this.unbindEvent();
-		}
-	},
+        /**
+         * @desc 각 이미지의 화면 위치 제공
+         * @param image
+         * @returns {boolean|number}
+         */
+        getHeight(image){
+            const rect = image.getBoundingClientRect();
 
-	loadItems : function(){
-		var len = this.stack.length;
+            return (rect && rect.top >= 0) <= window.innerHeight || document.documentElement.clientHeight;
+        }
 
-		this.unbindEvent();
+        /**
+         * @desc 스크롤 이벤트 등록
+         */
+        registerEvent(){
+            window.addEventListener('scroll', this.processing.bind(this), false);
+        }
 
-		while(len-- > 0){
-			var item = this.stack[len];
+        /**
+         * @desc 스크롤 이벤트 제거
+         */
+        destroyEvent(){
+            window.removeEventListener('scroll', this.processing.bind(this), false);
+        }
 
-			if(this.getBoundingClientProperty(item) === true){
-				this.replaceOriginalItem(item, len);
-				!this.loaded && this.logging();
-			}
-		}
-	},
+        /**
+         * @desc 스토어 갱신
+         * @param image
+         * @param index
+         */
+        destroyStore(image, index){
+            if(store.includes(image)){
+                store.splice(index, 1);
+                this.destroyEvent();
+            }
+        }
+    };
+})();
 
-	logging : function(){
-		this.loaded = true;
-		// tracking code ...
-	}
-};
+export default Preload;
