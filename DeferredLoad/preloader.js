@@ -13,8 +13,7 @@ const Preload = (() => {
             this._config = config;
             this._images = images;
 
-            // isIntersection ? this.observer() : this.establish();
-            this.establish();
+            isIntersection ? this.observer() : this.establish();
         }
 
         /**
