@@ -1,6 +1,6 @@
 const Preload = (() => {
     let observer = null;
-    let timer = null;
+    let timer;
 
     const throttleTime = 200;
     const store = [];
@@ -13,7 +13,8 @@ const Preload = (() => {
             this._config = config;
             this._images = images;
 
-            isIntersection ? this.observer() : this.establish();
+            // isIntersection ? this.observer() : this.establish();
+            this.establish();
         }
 
         /**
@@ -82,10 +83,10 @@ const Preload = (() => {
         throttling(target, index){
             if(!timer){
                 timer = setTimeout(_ => {
-                    timer = null;
                     this.preload(target, index);
 
                 }, throttleTime);
+                timer = null;
             }
         }
 
@@ -93,14 +94,11 @@ const Preload = (() => {
          * @desc 스토어에 저장되어 있는 이미지 preload
          */
         processing(){
-            let image;
-            let len = store.length - 1;
+            let len = store.length;
 
             this.destroyEvent();
 
-            while(image = store[len--]){
-                if(this.getHeight(image)) this.throttling(image, len);
-            }
+            while(len--) if(this.getHeight(store[len])) this.throttling(store[len], len);
         }
 
         /**
