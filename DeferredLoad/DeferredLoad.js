@@ -1,15 +1,17 @@
 const Preload = (() => {
     let observer = null;
+    let timer = null;
 
+    const throttleTime = 200;
     const store = [];
-    const isIntersection = ('IntersectionObserver' in window);
+    const isIntersection = 'IntersectionObserver' in window;
     const y = window.scrollY;
 
-    // TODO: background 이미지 지원 여부 및 쓰로틀링 지원
+    // TODO: background 이미지 지원 여부
     return class {
-        constructor(config){
+        constructor(config, images){
             this._config = config;
-            this._images = document.querySelectorAll('[data-preload]');
+            this._images = images;
 
             isIntersection ? this.observer() : this.establish();
         }
@@ -54,12 +56,36 @@ const Preload = (() => {
          * @param index
          */
         preload(target, index){
-            const { preload } = target.dataset;
-
-            target.src = preload;
+            this.repainting(target);
 
             if(!isIntersection){
                 this.destroyStore(target, index);
+            }
+        }
+
+        /**
+         * @desc re-painting images
+         * @param target
+         */
+        repainting(target){
+            const { preload } = target.dataset;
+
+            if(target.tagName.toLowerCase() === 'img') target.src = preload;
+            else target.style.background.replace(/url\([?.*]\)/i, preload);
+        }
+
+        /**
+         * @desc 스크롤 이벤트 쓰로틀링
+         * @param target
+         * @param index
+         */
+        throttling(target, index){
+            if(!timer){
+                timer = setTimeout(_ => {
+                    timer = null;
+                    this.preload(target, index);
+
+                }, throttleTime);
             }
         }
 
@@ -73,7 +99,7 @@ const Preload = (() => {
             this.destroyEvent();
 
             while(image = store[len--]){
-                if(this.getHeight(image)) this.preload(image, len);
+                if(this.getHeight(image)) this.throttling(image, len);
             }
         }
 
