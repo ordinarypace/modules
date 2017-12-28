@@ -83,10 +83,10 @@ const Preload = (() => {
         throttling(target, index){
             if(!timer){
                 timer = setTimeout(_ => {
-                    this.preload(target, index);
+                    timer = null;
+                    this.processing(target, index);
 
                 }, throttleTime);
-                timer = null;
             }
         }
 
@@ -98,7 +98,7 @@ const Preload = (() => {
 
             this.destroyEvent();
 
-            while(len--) if(this.getHeight(store[len])) this.throttling(store[len], len);
+            while(len--) if(this.getHeight(store[len])) this.preload(store[len], len);
         }
 
         /**
@@ -116,14 +116,14 @@ const Preload = (() => {
          * @desc 스크롤 이벤트 등록
          */
         registerEvent(){
-            window.addEventListener('scroll', this.processing.bind(this), false);
+            window.addEventListener('scroll', this.throttling.bind(this), false);
         }
 
         /**
          * @desc 스크롤 이벤트 제거
          */
         destroyEvent(){
-            window.removeEventListener('scroll', this.processing.bind(this), false);
+            window.removeEventListener('scroll', this.throttling.bind(this), false);
         }
 
         /**
