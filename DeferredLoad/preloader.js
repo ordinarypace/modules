@@ -58,9 +58,7 @@ const Preload = (() => {
         preload(target, index){
             this.repainting(target);
 
-            if(!isIntersection){
-                this.destroyStore(target, index);
-            }
+            if(!isIntersection) this.destroyStore(target, index);
         }
 
         /**
