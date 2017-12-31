@@ -10,7 +10,7 @@ const Preload = (_ => {
     // TODO: background 이미지 지원 여부
     return class {
         constructor(config = {}, images){
-            if(!this._images.length) throw new Error('There are no images!');
+            if(!images.length) throw new Error('There are no images!');
             
             this._config = config;
             this._images = images;
