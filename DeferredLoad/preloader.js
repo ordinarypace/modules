@@ -1,4 +1,4 @@
-const Preload = (() => {
+const Preload = (_ => {
     let observer = null;
     let timer;
 
