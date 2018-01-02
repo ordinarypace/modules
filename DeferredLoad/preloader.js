@@ -1,17 +1,17 @@
-const Preload = (_ => {
+const Preload = (() => {
     let observer = null;
     let timer;
 
     const throttleTime = 200;
     const store = [];
     const isIntersection = 'IntersectionObserver' in window;
+    const isIntersection = false;
     const y = window.scrollY;
 
-    // TODO: background 이미지 지원 여부
     return class {
         constructor(config = {}, images){
             if(!images.length) throw new Error('There are no images!');
-            
+
             this._config = config;
             this._images = images;
 
@@ -49,7 +49,9 @@ const Preload = (_ => {
 
             while(len--) store.push(this._images[len]);
 
-            y === 0 ? this.processing() : this.registerEvent();
+            if(!y) this.processing();
+
+            this.registerEvent();
         }
 
         /**
@@ -60,7 +62,9 @@ const Preload = (_ => {
         preload(target, index){
             this.repainting(target);
 
-            if(!isIntersection) this.destroyStore(target, index);
+            if(!isIntersection){
+                this.destroyStore(index);
+            }
         }
 
         /**
@@ -95,9 +99,7 @@ const Preload = (_ => {
         processing(){
             let len = store.length;
 
-            this.destroyEvent();
-
-            while(len--) if(this.getHeight(store[len])) this.preload(store[len], len);
+            while(len--) if(this.getHeight(store[len]) === true) this.preload(store[len], len);
         }
 
         /**
@@ -108,7 +110,7 @@ const Preload = (_ => {
         getHeight(image){
             const rect = image.getBoundingClientRect();
 
-            return (rect && rect.top >= 0) <= window.innerHeight || document.documentElement.clientHeight;
+            return (rect && rect.top) <= window.innerHeight || document.documentElement.clientHeight;
         }
 
         /**
@@ -130,8 +132,9 @@ const Preload = (_ => {
          * @param image
          * @param index
          */
-        destroyStore(image, index){
-            if(store.includes(image)){
+        destroyStore(index){
+            if(!store.length) this.destroyEvent();
+            else{
                 store.splice(index, 1);
                 this.destroyEvent();
             }
