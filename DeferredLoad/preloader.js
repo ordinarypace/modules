@@ -5,7 +5,6 @@ const Preload = (() => {
     const throttleTime = 200;
     const store = [];
     const isIntersection = 'IntersectionObserver' in window;
-    const isIntersection = false;
     const y = window.scrollY;
 
     return class {
